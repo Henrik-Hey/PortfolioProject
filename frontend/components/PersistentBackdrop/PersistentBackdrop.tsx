@@ -4,12 +4,14 @@ import * as THREE from 'three';
 import gsap from "gsap";
 
 import useWindowSize from '../_hooks/useWindowSize';
+import * as loaders from '../_utils/Loader'
 import IDs from '../../variables/IDs';
 
 const PersistentBackdrop = () => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null) as React.MutableRefObject<HTMLCanvasElement>;
     const followModel = useRef<THREE.Mesh>(null) as React.MutableRefObject<THREE.Mesh>;
+    const waveModel = useRef<THREE.Mesh>(null) as React.MutableRefObject<THREE.Mesh>;
     const size = useWindowSize();
  
     useEffect(() => {
@@ -17,18 +19,82 @@ const PersistentBackdrop = () => {
     }, [])
 
     useEffect(() => {
-        InitializeThreeJS(canvasRef, followModel);
-        BuildAnimation(followModel); 
+        InitializeThreeJS(canvasRef, followModel, waveModel);
+        BuildAnimation(followModel, waveModel); 
     }, [canvasRef, size]);
 
     return ( 
-        <FixedCanvas ref={canvasRef}/> 
+        <FixedContainer>
+            <FixedCanvas ref={canvasRef}/> 
+        </FixedContainer>
     )
+}
+
+const generateWaveMesh = ( depth: number, width: number, height: number, color: number, seed: number ) => {
+    const aspectRatio = width / height;
+    const verticalSegments = 32;
+    const horizontalSegments =  verticalSegments * aspectRatio;
+    const geometry = new THREE.PlaneGeometry(width, height * 1.75, horizontalSegments, verticalSegments);
+
+    // Material Logic
+    const vertexShader = () => {
+        return `
+            varying vec3 vUv; 
+            uniform float delta;
+            uniform float seed;
+        
+            void main() {
+                vec3 morphedPos = position;
+
+                morphedPos.y += sin(position.x + delta) * ((position.x + 5.0) / 7.0) * seed;
+                morphedPos.y += sin(position.x * 0.5) * seed;
+                morphedPos.y -= sin(delta) * .5;
+
+                if(morphedPos.y > 1.00) {
+                    morphedPos.y = position.y;
+                }
+
+                vUv = morphedPos; 
+                
+
+                vec4 modelViewPosition = modelViewMatrix * vec4(morphedPos, 1.0);
+                gl_Position = projectionMatrix * modelViewPosition; 
+            }
+        `
+    }
+
+    const fragmentShader = () => {
+        return `
+            uniform vec3 color; 
+            varying vec3 vUv;
+    
+            void main() {
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `
+    }
+
+    let uniforms = {
+        color: {type: 'vec3', value: new THREE.Color(color)},
+        delta: {type: 'float', value: Math.sin(Date.now())},
+        seed: {type: 'float', value: seed},
+    }
+    const material = new THREE.ShaderMaterial({
+        uniforms: uniforms,
+        fragmentShader: fragmentShader(),
+        vertexShader: vertexShader(),
+    })
+    const mesh = new THREE.Mesh( geometry, material );
+
+    mesh.position.z = depth;
+    mesh.position.y = 0 + (height/2)
+    return mesh;
 }
 
 const InitializeThreeJS = (
     canvasRef: React.MutableRefObject <HTMLCanvasElement>,
     followModel: React.MutableRefObject <THREE.Mesh>,
+    waveModel: React.MutableRefObject <THREE.Mesh>,
 ) => {
     if(!canvasRef.current) return;
 
@@ -64,22 +130,44 @@ const InitializeThreeJS = (
 
     camera.position.z = 5;  
 
-    function animate() {
+    const wave1Depth = -1.5;
+    const wave1Height = visibleHeightAtZDepth( wave1Depth, camera );
+    const wave1Width = visibleWidthAtZDepth( wave1Depth, camera );
+    const wave1 = waveModel.current = generateWaveMesh( wave1Depth, wave1Width, wave1Height / 2, 0xffffff, 0.99 );
+    scene.add( wave1 );
+
+    const animate = () => {
         requestAnimationFrame( animate );
         renderer.render( scene, camera );
 
+        wave1.material.uniforms.delta.value += 0.01;
         cube.rotation.y += 0.01;
     }
     animate();
 }
 
 const BuildAnimation = (
-    followModel: React.MutableRefObject <THREE.Mesh>
+    followModel: React.MutableRefObject <THREE.Mesh>,
+    waveModel: React.MutableRefObject <THREE.Mesh>,
 ) => {
     const timeline = gsap.timeline();
 
-    timeline.to(
+    gsap.set(
+        followModel.current.position, 
+        { 
+            x: 0,
+            y: 0,
+            z: 0,
+        }
+    )
+
+    timeline.fromTo(
         followModel.current.position,
+        { 
+            x: 0,
+            y: 0,
+            z: 0,
+        },
         {
             scrollTrigger: {
                 scrub: true,
@@ -89,14 +177,70 @@ const BuildAnimation = (
                 end: 'bottom bottom', 
                 pin: true
             },
-            x: -4, onUpdate: function () {
-            }, onComplete: function () {
-                console.log("complete");
+            x: -4, 
+            y: 0,
+            z: 0,
+            onUpdate: function () {
+            }, 
+            onComplete: function () {
+                console.log("complete 1");
+            } 
+        });
+
+    timeline.fromTo(
+        // @ts-ignore
+        waveModel.current.material.uniforms.seed,
+        { 
+            value: 0.99
+        },
+        {
+            scrollTrigger: {
+                scrub: true,
+                trigger: `.${IDs.Canvas.Room}`,
+                endTrigger: `.${IDs.AboutMe}`,
+                start: 'top top',
+                end: 'bottom bottom', 
+                pin: true
+            },
+            value: 0, 
+            onUpdate: function () {
+            }, 
+            onComplete: function () {
+                console.log("complete 1");
+            } 
+        });
+
+    const initialPosition = waveModel.current.position.y
+    timeline.fromTo(
+        // @ts-ignore
+        waveModel.current.position,
+        { 
+            y: initialPosition,
+        },
+        {
+            scrollTrigger: {
+                scrub: true,
+                trigger: `.${IDs.Canvas.Room}`,
+                endTrigger: `.${IDs.AboutMe}`,
+                start: 'top top',
+                end: 'bottom bottom', 
+                pin: true
+            },
+            y: initialPosition * 4, 
+            onUpdate: function () {
+            }, 
+            onComplete: function () {
+                console.log("complete 1");
             } 
         });
     
-    timeline.to(
+    timeline.fromTo(
         followModel.current.position,
+        {
+            x: -4,
+            y: 0,
+            z: 0,
+        },
         {
             scrollTrigger: { 
                 scrub: true,
@@ -105,14 +249,23 @@ const BuildAnimation = (
                 start: 'top top',
                 end: 'bottom bottom',
             },
-            x: 4, onUpdate: function () {
-            }, onComplete: function () {
-                console.log("complete");
+            x: 4, 
+            y: 0,
+            z: 0,
+            onUpdate: function () {
+            }, 
+            onComplete: function () {
+                console.log("complete 2");
             }
         });
 
-    timeline.to( 
+    timeline.fromTo( 
         followModel.current.position,
+        {
+            x: 4,
+            y: 0,
+            z: 0,
+        },
         {
             scrollTrigger: {
                 scrub: true,
@@ -123,46 +276,40 @@ const BuildAnimation = (
             },
             x: 0, z: 0, y: 2, onUpdate: function () {
             }, onComplete: function () {
-                console.log("complete");
-            }
-        });
-
-    timeline.to( 
-        followModel.current.position,
-        {
-            scrollTrigger: {
-                scrub: true,
-                trigger: `.${IDs.Projects.LibiGL}`,
-                endTrigger: `.${IDs.Projects.Chess}`,
-                start: 'top top',
-                end: 'bottom bottom',
-            },
-            x: 0, z: 0, y: -2, onUpdate: function () {
-            }, onComplete: function () {
-                console.log("complete");
-            }
-        });
- 
-    timeline.to( 
-        followModel.current.position,
-        {
-            scrollTrigger: {
-                scrub: true,
-                trigger: `.${IDs.Projects.Chess}`, 
-                endTrigger: `.${IDs.Projects.LWJGL}`,
-                start: 'top top',
-                end: 'bottom bottom',
-            },
-            x: 0, z: 3, y: .1, onUpdate: function () {
-            }, onComplete: function () {
-                console.log("complete");
+                console.log("complete 3");
             }
         });
 }
 
-const FixedCanvas = styled.canvas`
+const visibleHeightAtZDepth = ( depth: number, camera: THREE.PerspectiveCamera ) => {
+    // compensate for cameras not positioned at z=0
+    const cameraOffset = camera.position.z;
+    if ( depth < cameraOffset ) depth -= cameraOffset;
+    else depth += cameraOffset;
+  
+    // vertical fov in radians
+    const vFOV = camera.fov * Math.PI / 180; 
+  
+    // Math.abs to ensure the result is always positive
+    return 2 * Math.tan( vFOV / 2 ) * Math.abs( depth );
+};
+  
+const visibleWidthAtZDepth = ( depth: number, camera: THREE.PerspectiveCamera ) => {
+    const height = visibleHeightAtZDepth( depth, camera );
+    return height * camera.aspect;
+};
+
+const FixedContainer = styled.div`
     position: fixed;
-    top: 0px;
+    top: 0px; 
+    left: 0px;
+    width: 100vw;
+    height: 100vh;
+`
+
+const FixedCanvas = styled.canvas`
+    position: absolute;
+    top: 0px; 
     left: 0px;
     width: 100vw;
     height: 100vh;

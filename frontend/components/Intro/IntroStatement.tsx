@@ -4,6 +4,11 @@ import styled from 'styled-components';
 import IDs from '../../variables/IDs';
 
 const IntroStatement = () => {
+    
+    useEffect(() => {
+
+    }, [])
+
     return (
         <Container className={IDs.Intro}>
             <StyledHeading>
@@ -15,6 +20,10 @@ const IntroStatement = () => {
         </Container>
     )
 } 
+
+const buildAnimation = () => {
+
+}
 
 const Container = styled.div`
     position: relative;

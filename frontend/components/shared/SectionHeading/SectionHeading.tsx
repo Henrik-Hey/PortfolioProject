@@ -1,26 +1,26 @@
 import styled from 'styled-components';
 
 interface props {
-    title: string
+  title: string;
 }
 
 const SectionHeading = ({ title }: props) => (
-    <Container>
-        <Heading>
-            {title}
-        </Heading>
-    </Container>
-)
+  <>
+    <Heading>{title}</Heading>
+    <Divider />
+  </>
+);
 
-const Container = styled.div`
-    width: 100%;
-    border-bottom: 8px solid red;
-`
+const Divider = styled.div`
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #6f76fd, #46c7d8, #c737cc);
+`;
 
 const Heading = styled.h3`
-    font-size: 2.5em;
-    margin-block-start: 0.25em;
-    margin-block-end: 0.25em;
-`
+  font-size: 2.5em;
+  margin-block-start: 0.25em;
+  margin-block-end: 0.25em;
+`;
 
 export default SectionHeading;

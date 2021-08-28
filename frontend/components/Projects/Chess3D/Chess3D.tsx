@@ -11,10 +11,17 @@ import {
 import IDs from '../../../variables/IDs';
 import MeshRenderer from '../MeshRenderer';
 
-const MP_UP_ID = IDs.Projects.LibiGL + 'motion_path_up';
-const MP_DOWN_ID = IDs.Projects.LibiGL + 'motion_path_down';
+const MP_UP_ID = IDs.Projects.Chess + 'motion_path_up';
+const MP_DOWN_ID = IDs.Projects.Chess + 'motion_path_down';
 
-const LibiGL = () => {
+const MUTATION_FUNC = (mesh: THREE.Mesh) => {
+  mesh.scale.x = 0.1;
+  mesh.scale.y = 0.1;
+  mesh.scale.z = 0.1;
+  return mesh;
+};
+
+const Chess3D = () => {
   const timelineRef = useRef<GSAPTimeline>(
     null,
   ) as MutableRefObject<GSAPTimeline>;
@@ -64,7 +71,7 @@ const LibiGL = () => {
   return (
     <Container ref={containerRef}>
       <ContentContainer>
-        <Intro ref={introRef} className={IDs.Projects.LibiGL}>
+        <Intro ref={introRef} className={IDs.Projects.Chess}>
           <StyledSection>
             <SectionContent>
               <SectionSegment ref={segment1Ref}>
@@ -114,7 +121,10 @@ const LibiGL = () => {
                 />
               </SVGPathContainer>
               <CanvasCard ref={level3Ref}>
-                <MeshRenderer meshUrl="/models/spot/spotfinestcentered.obj" />
+                <MeshRenderer
+                  meshUrl="/models/chess/king.obj"
+                  mutationsFunc={MUTATION_FUNC}
+                />
                 <CCTitleContainer>
                   <CCTitleHeading>Level 3</CCTitleHeading>
                   <CCTitleDivider />
@@ -122,7 +132,10 @@ const LibiGL = () => {
                 </CCTitleContainer>
               </CanvasCard>
               <CanvasCard ref={level2Ref}>
-                <MeshRenderer meshUrl="/models/spot/spotfinecentered.obj" />
+                <MeshRenderer
+                  meshUrl="/models/chess/queen.obj"
+                  mutationsFunc={MUTATION_FUNC}
+                />
                 <CCTitleContainer>
                   <CCTitleHeading>Level 2</CCTitleHeading>
                   <CCTitleDivider />
@@ -130,7 +143,10 @@ const LibiGL = () => {
                 </CCTitleContainer>
               </CanvasCard>
               <CanvasCard ref={level1Ref}>
-                <MeshRenderer meshUrl="/models/spot/spotleastfinecentered.obj" />
+                <MeshRenderer
+                  meshUrl="/models/chess/knight.obj"
+                  mutationsFunc={MUTATION_FUNC}
+                />
                 <CCTitleContainer>
                   <CCTitleHeading>Level 1</CCTitleHeading>
                   <CCTitleDivider />
@@ -349,4 +365,4 @@ const CCTitleSubHeading = styled.h4`
   margin: 0px;
 `;
 
-export default LibiGL;
+export default Chess3D;

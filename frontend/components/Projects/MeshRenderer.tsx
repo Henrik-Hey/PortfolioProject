@@ -2,13 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
 
-import { ModelLoaderOBJ } from '../../_utils/Loader';
+import { ModelLoaderOBJ } from '../_utils/Loader';
 
 interface MeshRendererProps {
   meshUrl: string;
+  mutationsFunc?: (Mesh: THREE.Mesh) => THREE.Mesh;
 }
 
-const MeshRenderer = ({ meshUrl }: MeshRendererProps) => {
+const MeshRenderer = ({ meshUrl, mutationsFunc }: MeshRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -31,9 +32,14 @@ const MeshRenderer = ({ meshUrl }: MeshRendererProps) => {
     camera.position.z = 2;
 
     ModelLoaderOBJ(meshUrl).then((model) => {
-      const mesh = model;
+      let mesh = model;
       mesh.material = new THREE.MeshNormalMaterial({ wireframe: true });
       mesh.rotation.y = Math.random() * 180;
+
+      if (mutationsFunc) {
+        mesh = mutationsFunc(mesh);
+      }
+
       scene.add(mesh);
 
       function animate() {

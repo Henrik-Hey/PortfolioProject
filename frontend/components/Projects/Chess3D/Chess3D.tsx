@@ -9,33 +9,20 @@ import {
   FullHeightContent,
 } from '../../shared';
 import IDs from '../../../variables/IDs';
-import MeshRenderer from '../MeshRenderer';
+import ChessBoard from './ChessBoard';
 
-const MP_UP_ID = IDs.Projects.Chess + 'motion_path_up';
-const MP_DOWN_ID = IDs.Projects.Chess + 'motion_path_down';
-
-const MUTATION_FUNC = (mesh: THREE.Mesh) => {
-  mesh.scale.x = 0.1;
-  mesh.scale.y = 0.1;
-  mesh.scale.z = 0.1;
-  return mesh;
-};
+interface BoardRef {
+  tiles: THREE.Mesh[];
+  pieces: THREE.Mesh[];
+}
 
 const Chess3D = () => {
   const timelineRef = useRef<GSAPTimeline>(
     null,
   ) as MutableRefObject<GSAPTimeline>;
 
-  // Model Card Refs
-  const level1Ref = useRef<HTMLDivElement>(
-    null,
-  ) as MutableRefObject<HTMLDivElement>;
-  const level2Ref = useRef<HTMLDivElement>(
-    null,
-  ) as MutableRefObject<HTMLDivElement>;
-  const level3Ref = useRef<HTMLDivElement>(
-    null,
-  ) as MutableRefObject<HTMLDivElement>;
+  // Chess Tile ref
+  const chessTilesRef = useRef<BoardRef>(null) as MutableRefObject<BoardRef>;
 
   // Section Segment Refs
   const segment1Ref = useRef<HTMLDivElement>(
@@ -52,11 +39,10 @@ const Chess3D = () => {
   const introRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log(chessTilesRef.current);
     BuildAnimation(
       timelineRef,
-      level1Ref,
-      level2Ref,
-      level3Ref,
+      chessTilesRef,
       segment1Ref,
       segment2Ref,
       segment3Ref,
@@ -66,7 +52,7 @@ const Chess3D = () => {
     return () => {
       timelineRef.current?.clear();
     };
-  }, [introRef]);
+  }, [timelineRef, chessTilesRef]);
 
   return (
     <Container ref={containerRef}>
@@ -74,86 +60,35 @@ const Chess3D = () => {
         <Intro ref={introRef} className={IDs.Projects.Chess}>
           <StyledSection>
             <SectionContent>
+              <SectionSegment>
+                <ChessBoard ref={chessTilesRef} />
+              </SectionSegment>
               <SectionSegment ref={segment1Ref}>
                 <SectionHeading
-                  title="Multi-Resolution Analysis"
-                  subHeading={
-                    '[Examples of algorithm output shown on the side]'
-                  }
+                  title="3D Chess with THREE.js"
+                  subHeading={"[because regular chess isn't 3D]"}
                 />
               </SectionSegment>
               <SectionSegment ref={segment2Ref}>
-                <SectionParagraph>
+                <Paragraph>
                   In prep for the (sadly cancelled) libigl hackathon, I wrote an
                   application for mesh multi-resolution analysis with a
                   colleague, referencing this paper. Implemented Taubin's
                   subdivision connectivity detection algorithm and auxiliary
                   functions to perform forward and inverse wavelet transforms.
-                </SectionParagraph>
+                </Paragraph>
               </SectionSegment>
               <SectionSegment ref={segment3Ref}>
-                <SectionParagraph>
+                <Paragraph>
                   Tech Stack
                   <ul>
                     <li>C++</li>
                     <li>LibiGL</li>
                     <li>Github</li>
                   </ul>
-                </SectionParagraph>
+                </Paragraph>
               </SectionSegment>
             </SectionContent>
-            <CanvasCardContainer>
-              <SVGPathContainer viewBox="-20 0 40 40">
-                <path
-                  id={MP_DOWN_ID}
-                  fill="none"
-                  stroke="green"
-                  strokeWidth="2"
-                  d="M60,80 a60,60 0 0,1 -60,-60"
-                />
-
-                <path
-                  id={MP_UP_ID}
-                  fill="none"
-                  stroke="red"
-                  strokeWidth="2"
-                  d="M0,20 a60,60 0 0,1 60,-60"
-                />
-              </SVGPathContainer>
-              <CanvasCard ref={level3Ref}>
-                <MeshRenderer
-                  meshUrl="/models/chess/king.obj"
-                  mutationsFunc={MUTATION_FUNC}
-                />
-                <CCTitleContainer>
-                  <CCTitleHeading>Level 3</CCTitleHeading>
-                  <CCTitleDivider />
-                  <CCTitleSubHeading>Highest resolution</CCTitleSubHeading>
-                </CCTitleContainer>
-              </CanvasCard>
-              <CanvasCard ref={level2Ref}>
-                <MeshRenderer
-                  meshUrl="/models/chess/queen.obj"
-                  mutationsFunc={MUTATION_FUNC}
-                />
-                <CCTitleContainer>
-                  <CCTitleHeading>Level 2</CCTitleHeading>
-                  <CCTitleDivider />
-                  <CCTitleSubHeading>High resolution</CCTitleSubHeading>
-                </CCTitleContainer>
-              </CanvasCard>
-              <CanvasCard ref={level1Ref}>
-                <MeshRenderer
-                  meshUrl="/models/chess/knight.obj"
-                  mutationsFunc={MUTATION_FUNC}
-                />
-                <CCTitleContainer>
-                  <CCTitleHeading>Level 1</CCTitleHeading>
-                  <CCTitleDivider />
-                  <CCTitleSubHeading>Lowest resolution</CCTitleSubHeading>
-                </CCTitleContainer>
-              </CanvasCard>
-            </CanvasCardContainer>
           </StyledSection>
         </Intro>
       </ContentContainer>
@@ -162,21 +97,17 @@ const Chess3D = () => {
 };
 
 const BuildAnimation = (
-  timelineRef: React.MutableRefObject<GSAPTimeline>,
-  level1Ref: React.MutableRefObject<HTMLDivElement>,
-  level2Ref: React.MutableRefObject<HTMLDivElement>,
-  level3Ref: React.MutableRefObject<HTMLDivElement>,
-  segment1Ref: React.MutableRefObject<HTMLDivElement>,
-  segment2Ref: React.MutableRefObject<HTMLDivElement>,
-  segment3Ref: React.MutableRefObject<HTMLDivElement>,
+  timelineRef: MutableRefObject<GSAPTimeline>,
+  chessTilesRef: MutableRefObject<BoardRef>,
+  segment1Ref: MutableRefObject<HTMLDivElement>,
+  segment2Ref: MutableRefObject<HTMLDivElement>,
+  segment3Ref: MutableRefObject<HTMLDivElement>,
   containerRef: React.RefObject<HTMLDivElement>,
   introRef: React.RefObject<HTMLDivElement>,
 ) => {
   if (
     !introRef.current ||
-    !level1Ref.current ||
-    !level2Ref.current ||
-    !level3Ref.current ||
+    !chessTilesRef.current ||
     !segment1Ref.current ||
     !segment2Ref.current ||
     !segment3Ref.current ||
@@ -185,13 +116,66 @@ const BuildAnimation = (
     return;
 
   const timeline = (timelineRef.current = gsap.timeline());
+  const boardTimeline = gsap.timeline();
+
+  const { tiles, pieces } = chessTilesRef.current;
+  tiles.forEach((Tile: THREE.Mesh) => {
+    boardTimeline.fromTo(
+      Tile.position,
+      {
+        y: -15 - Math.random() / 2,
+      },
+      {
+        y: 0.1,
+        duration: 0.5 + Math.random() / 2,
+        ease: 'back.inOut(1, 0.3)',
+      },
+      0,
+    );
+  });
+
+  pieces.forEach((Piece: THREE.Mesh) => {
+    boardTimeline.fromTo(
+      Piece.position,
+      {
+        y: 15 - Math.random() / 2,
+        duration: 0.5,
+      },
+      {
+        y: -0.2,
+        duration: 0.75 + Math.random() / 4,
+        ease: 'none',
+      },
+      0,
+    );
+  });
+
+  pieces.forEach((Piece: THREE.Mesh) => {
+    boardTimeline.fromTo(
+      Piece.scale,
+      {
+        x: 0,
+        y: 0,
+        z: 0,
+        delay: 0,
+      },
+      {
+        x: 0.2,
+        y: 0.2,
+        z: 0.2,
+        duration: 0.5,
+        delay: 0.25,
+        ease: 'power4.in',
+      },
+      0,
+    );
+  });
 
   const segments = [
     segment1Ref.current,
     segment2Ref.current,
     segment3Ref.current,
   ];
-  const levelCards = [level1Ref.current, level2Ref.current, level3Ref.current];
 
   gsap.set(segments, { opacity: 0, x: -20 });
 
@@ -206,53 +190,13 @@ const BuildAnimation = (
         x: 0,
         duration: 0.125,
       },
-      counter * increment,
+      0.25 + counter * increment,
     );
     counter += 2;
     timeline.to(
       Segment,
       { opacity: 0, x: 20, duration: 0.125 },
-      counter * increment,
-    );
-    counter++;
-  });
-
-  gsap.set(levelCards, { y: '100vh' });
-
-  const MOTION_PATH_PRESET_DOWN = {
-    path: `#${MP_DOWN_ID}`,
-    align: `#${MP_DOWN_ID}`,
-    alignOrigin: [0.5, 0.5],
-  };
-
-  const MOTION_PATH_PRESET_UP = {
-    path: `#${MP_UP_ID}`,
-    align: `#${MP_UP_ID}`,
-    alignOrigin: [0.5, 0.5],
-  };
-
-  counter = 0;
-  increment = 0.175;
-
-  levelCards.forEach((Card: HTMLDivElement, index: number) => {
-    timeline.to(
-      Card,
-      {
-        motionPath: MOTION_PATH_PRESET_DOWN,
-        duration: increment,
-        ease: 'power1.inOut',
-      },
-      counter * increment,
-    );
-    counter += 2;
-    timeline.to(
-      Card,
-      {
-        motionPath: MOTION_PATH_PRESET_UP,
-        duration: increment,
-        ease: 'power1.inOut',
-      },
-      counter * increment,
+      0.25 + counter * increment,
     );
     counter++;
   });
@@ -263,6 +207,12 @@ const BuildAnimation = (
     start: 'top top',
     end: 'bottom bottom',
     animation: timeline,
+    onEnter: () => {
+      boardTimeline.play();
+    },
+    onLeaveBack: () => {
+      boardTimeline.reverse();
+    },
   });
 };
 
@@ -299,70 +249,8 @@ const SectionSegment = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
+  overflow: visible;
   align-items: center;
-  opacity: 0;
-`;
-
-const SectionParagraph = styled(Paragraph)``;
-
-const CanvasCardContainer = styled(FullHeightContent)`
-  position: relative;
-  flex: 1;
-`;
-
-const SVGPathContainer = styled.svg`
-  position: absolute;
-  left: 0px;
-  width: calc((100vw - 960px) / 2 + 180px);
-  height: 100vh;
-  opacity: 0;
-  min-width: 280px;
-
-  @media (max-width: 960px) {
-    width: 200%;
-  }
-`;
-
-const CanvasCard = styled.div`
-  position: absolute;
-  max-width: 300px;
-  height: calc(60vh);
-  min-width: 280px;
-  flex: 1;
-  background-image: linear-gradient(#101010, #383838);
-  border-radius: 75px;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-  overflow: hidden;
-`;
-
-const CCTitleContainer = styled.div`
-  position: absolute;
-  height: fit-content;
-  width: calc(100% - 32px);
-  bottom: 75px;
-  padding: 0px 16px;
-`;
-
-const CCTitleHeading = styled.h3`
-  font-family: 'Roboto Mono', monospace;
-  font-size: 2rem;
-  font-weight: 200;
-  color: ${({ theme }) => theme.interactive.normal};
-  margin: 0px;
-`;
-
-const CCTitleDivider = styled.div`
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #6f76fd, #46c7d8, #c737cc);
-`;
-
-const CCTitleSubHeading = styled.h4`
-  font-family: 'Roboto Mono', monospace;
-  font-size: 1.25rem;
-  font-weight: 200;
-  color: ${({ theme }) => theme.interactive.normal};
-  margin: 0px;
 `;
 
 export default Chess3D;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, MutableRefObject } from 'react';
+import React, { useEffect, useRef, MutableRefObject, useState } from 'react';
 import gsap from 'gsap';
 import styled from 'styled-components';
 
@@ -10,13 +10,17 @@ import {
 } from '../../shared';
 import IDs from '../../../variables/IDs';
 import ChessBoard from './ChessBoard';
+import * as THREE from 'three';
 
 interface BoardRef {
   tiles: THREE.Mesh[];
   pieces: THREE.Mesh[];
+  initialPos: THREE.Vector3[];
 }
 
 const Chess3D = () => {
+  const [loaded, setLoaded] = useState(false);
+
   const timelineRef = useRef<GSAPTimeline>(
     null,
   ) as MutableRefObject<GSAPTimeline>;
@@ -39,6 +43,7 @@ const Chess3D = () => {
   const introRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!loaded) return;
     console.log(chessTilesRef.current);
     BuildAnimation(
       timelineRef,
@@ -52,7 +57,7 @@ const Chess3D = () => {
     return () => {
       timelineRef.current?.clear();
     };
-  }, [timelineRef, chessTilesRef]);
+  }, [timelineRef, chessTilesRef, loaded]);
 
   return (
     <Container ref={containerRef}>
@@ -61,7 +66,7 @@ const Chess3D = () => {
           <StyledSection>
             <SectionContent>
               <SectionSegment>
-                <ChessBoard ref={chessTilesRef} />
+                <ChessBoard ref={chessTilesRef} setLoaded={setLoaded} />
               </SectionSegment>
               <SectionSegment ref={segment1Ref}>
                 <SectionHeading
@@ -96,6 +101,31 @@ const Chess3D = () => {
   );
 };
 
+const movePiece = (
+  timeline: GSAPTimeline,
+  Piece: THREE.Mesh,
+  oldPosition: THREE.Vector3,
+  newPosition: THREE.Vector3,
+  time: number,
+) => {
+  timeline.fromTo(
+    Piece.position,
+    {
+      x: oldPosition.x,
+      y: oldPosition.y,
+      z: oldPosition.z,
+    },
+    {
+      x: newPosition.x,
+      y: newPosition.y,
+      z: newPosition.z,
+      ease: 'power1.in',
+      duration: 0.25,
+    },
+    time,
+  );
+};
+
 const BuildAnimation = (
   timelineRef: MutableRefObject<GSAPTimeline>,
   chessTilesRef: MutableRefObject<BoardRef>,
@@ -118,7 +148,7 @@ const BuildAnimation = (
   const timeline = (timelineRef.current = gsap.timeline());
   const boardTimeline = gsap.timeline();
 
-  const { tiles, pieces } = chessTilesRef.current;
+  const { tiles, pieces, initialPos } = chessTilesRef.current;
   tiles.forEach((Tile: THREE.Mesh) => {
     boardTimeline.fromTo(
       Tile.position,
@@ -171,6 +201,38 @@ const BuildAnimation = (
     );
   });
 
+  movePiece(
+    timeline,
+    pieces[13],
+    initialPos[13],
+    new THREE.Vector3(2, -0.2, 5),
+    0.5,
+  );
+
+  movePiece(
+    timeline,
+    pieces[20],
+    initialPos[20],
+    new THREE.Vector3(4, -0.2, 4),
+    1,
+  );
+
+  movePiece(
+    timeline,
+    pieces[14],
+    initialPos[14],
+    new THREE.Vector3(3, -0.2, 6),
+    1.5,
+  );
+
+  movePiece(
+    timeline,
+    pieces[27],
+    initialPos[27],
+    new THREE.Vector3(3, -0.2, 7),
+    2,
+  );
+
   const segments = [
     segment1Ref.current,
     segment2Ref.current,
@@ -201,7 +263,7 @@ const BuildAnimation = (
     counter++;
   });
 
-  const scrollTrigger = ScrollTrigger.create({
+  ScrollTrigger.create({
     trigger: containerRef.current,
     scrub: true,
     start: 'top top',

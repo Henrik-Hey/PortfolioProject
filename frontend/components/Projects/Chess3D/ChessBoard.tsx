@@ -34,6 +34,7 @@ export const FENLoader = (FEN: string): BoardState => {
 interface BoardRef {
   tiles: THREE.Mesh[];
   pieces: THREE.Mesh[];
+  initialPos: THREE.Vector3[];
 }
 
 // Chess stuffs
@@ -43,152 +44,165 @@ const lightTone: number = 0xfafafa;
 const TileUUIDs: Set<String> = new Set();
 
 interface ChessBoardProps {
-  ref: MutableRefObject<THREE.Mesh[]>;
+  setLoaded: (bool: boolean) => void;
 }
 
-const ChessBoard = forwardRef<BoardRef>((props, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const ChessBoard = forwardRef<BoardRef, ChessBoardProps>(
+  ({ setLoaded }: ChessBoardProps, ref) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
-    if (!canvasRef.current || !containerRef.current) return;
+    useEffect(() => {
+      if (!canvasRef.current || !containerRef.current) return;
 
-    const { width, height } = containerRef.current.getBoundingClientRect();
+      const { width, height } = containerRef.current.getBoundingClientRect();
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      antialias: true,
-      alpha: true,
-    });
-    renderer.setSize(width, height);
-    renderer.setClearColor(0xffffff00, 0);
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvasRef.current,
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setSize(width, height);
+      renderer.setClearColor(0xffffff00, 0);
 
-    camera.position.z = 11;
-    camera.position.y = 4;
-    camera.position.x = -3;
-    camera.rotateY(THREE.MathUtils.degToRad(-30));
-    camera.rotateX(THREE.MathUtils.degToRad(-10));
+      camera.position.z = 11.5;
+      camera.position.y = 6;
+      camera.position.x = -1.5;
+      camera.rotateY(THREE.MathUtils.degToRad(-20));
+      camera.rotateX(THREE.MathUtils.degToRad(-20));
 
-    const color = 0xffffff;
-    const intensity = 1;
-    const light = new THREE.DirectionalLight(color, intensity);
-    light.position.set(10, 10, 10);
-    scene.add(light);
+      const color = 0xffffff;
+      const intensity = 1;
+      const light = new THREE.DirectionalLight(color, intensity);
+      light.position.set(10, 10, 10);
+      scene.add(light);
 
-    scene.add(new THREE.AmbientLight(0x404040));
+      scene.add(new THREE.AmbientLight(0x404040));
 
-    Promise.all([
-      ModelLoaderOBJ('/models/chess/tower.obj'),
-      ModelLoaderOBJ('/models/chess/knight.obj'),
-      ModelLoaderOBJ('/models/chess/bishop.obj'),
-      ModelLoaderOBJ('/models/chess/queen.obj'),
-      ModelLoaderOBJ('/models/chess/king.obj'),
-      ModelLoaderOBJ('/models/chess/pawn.obj'),
-    ]).then((Meshes: THREE.Mesh[]) => {
-      let piece;
-      let isBlack;
-      const BoardState = FENLoader(
-        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-      );
-      const pieces: THREE.Mesh[] = [];
+      Promise.all([
+        ModelLoaderOBJ('/models/chess/tower.obj'),
+        ModelLoaderOBJ('/models/chess/knight.obj'),
+        ModelLoaderOBJ('/models/chess/bishop.obj'),
+        ModelLoaderOBJ('/models/chess/queen.obj'),
+        ModelLoaderOBJ('/models/chess/king.obj'),
+        ModelLoaderOBJ('/models/chess/pawn.obj'),
+      ]).then((Meshes: THREE.Mesh[]) => {
+        let piece;
+        let isBlack;
+        const BoardState = FENLoader(
+          'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        );
+        const pieces: THREE.Mesh[] = [];
+        const initialPos: THREE.Vector3[] = [];
 
-      const GeneratePiece = (
-        meshIndex: number,
-        i: number,
-        j: number,
-        cp: string,
-      ) => {
-        isBlack = cp === cp.toUpperCase(); // our board is coded so that uppercase represents black pieces
-        piece = Meshes[meshIndex].clone();
-        if (meshIndex === 1)
-          piece.rotateY(THREE.MathUtils.degToRad(90 * (isBlack ? 1 : -1)));
-        piece.position.set(i, -0.2, j);
-        // @ts-ignore
-        piece.material = new THREE.MeshNormalMaterial();
-        piece.name = cp;
-        piece.castShadow = true; //default is false
-        piece.receiveShadow = false; //default
+        const GeneratePiece = (
+          meshIndex: number,
+          i: number,
+          j: number,
+          cp: string,
+        ) => {
+          isBlack = cp === cp.toUpperCase(); // our board is coded so that uppercase represents black pieces
+          piece = Meshes[meshIndex].clone();
+          if (meshIndex === 1)
+            piece.rotateY(THREE.MathUtils.degToRad(90 * (isBlack ? 1 : -1)));
 
-        pieces.push(piece);
-        scene.add(piece);
-      };
-      // Generate all possible pieces
-      for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-          const cp = BoardState.map[i][j];
-          switch (cp) {
-            case 'r':
-            case 'R':
-              GeneratePiece(0, i, j, cp);
-              break;
-            case 'n':
-            case 'N':
-              GeneratePiece(1, i, j, cp);
-              break;
-            case 'b':
-            case 'B':
-              GeneratePiece(2, i, j, cp);
-              break;
-            case 'q':
-            case 'Q':
-              GeneratePiece(3, i, j, cp);
-              break;
-            case 'k':
-            case 'K':
-              GeneratePiece(4, i, j, cp);
-              break;
-            case 'p':
-            case 'P':
-              GeneratePiece(5, i, j, cp);
-              break;
-            default:
-              break;
-          }
-        }
-      }
-      // Create the board
-      const tiles = [];
-      for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-          const tileGeom = new THREE.BoxGeometry(tileSize, tileSize, 0.125);
-          const material = new THREE.MeshPhongMaterial({
-            color: (j + i) % 2 ? lightTone : darkTone,
-            side: THREE.DoubleSide,
+          const position = new THREE.Vector3(i, -0.2, j);
+          piece.position.set(position.x, position.y, position.z);
+          piece.scale.set(0.2, 0.2, 0.2);
+          initialPos.push(position);
+
+          // @ts-ignore
+          piece.material = new THREE.MeshPhongMaterial({
+            color: !isBlack ? lightTone : darkTone,
             shininess: 5,
             specular: 0x999999,
           });
-          const tileMesh = new THREE.Mesh(tileGeom, material);
+          piece.name = cp;
+          piece.castShadow = true; //default is false
+          piece.receiveShadow = false; //default
 
-          tileMesh.name = 'Tile';
-          tileMesh.rotateX(THREE.MathUtils.degToRad(-90));
-          tileMesh.position.set(i * tileSize, -0.2 / 2, j * tileSize);
-
-          tiles.push(tileMesh);
-          scene.add(tileMesh);
-          TileUUIDs.add(tileMesh.uuid);
+          pieces.push(piece);
+          scene.add(piece);
+        };
+        // Generate all possible pieces
+        for (let i = 0; i < 8; i++) {
+          for (let j = 0; j < 8; j++) {
+            const cp = BoardState.map[i][j];
+            switch (cp) {
+              case 'r':
+              case 'R':
+                GeneratePiece(0, i, j, cp);
+                break;
+              case 'n':
+              case 'N':
+                GeneratePiece(1, i, j, cp);
+                break;
+              case 'b':
+              case 'B':
+                GeneratePiece(2, i, j, cp);
+                break;
+              case 'q':
+              case 'Q':
+                GeneratePiece(3, i, j, cp);
+                break;
+              case 'k':
+              case 'K':
+                GeneratePiece(4, i, j, cp);
+                break;
+              case 'p':
+              case 'P':
+                GeneratePiece(5, i, j, cp);
+                break;
+              default:
+                break;
+            }
+          }
         }
-      }
+        // Create the board
+        const tiles = [];
+        for (let i = 0; i < 8; i++) {
+          for (let j = 0; j < 8; j++) {
+            const tileGeom = new THREE.BoxGeometry(tileSize, tileSize, 0.125);
+            const material = new THREE.MeshPhongMaterial({
+              color: (j + i) % 2 ? lightTone : darkTone,
+              side: THREE.DoubleSide,
+              shininess: 5,
+              specular: 0x999999,
+            });
+            const tileMesh = new THREE.Mesh(tileGeom, material);
 
-      // @ts-ignore
-      ref.current = { tiles, pieces };
+            tileMesh.name = 'Tile';
+            tileMesh.rotateX(THREE.MathUtils.degToRad(-90));
+            tileMesh.position.set(i * tileSize, -0.2 / 2, j * tileSize);
 
-      function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-      }
-      animate();
-    });
-  }, [canvasRef]);
+            tiles.push(tileMesh);
+            scene.add(tileMesh);
+            TileUUIDs.add(tileMesh.uuid);
+          }
+        }
 
-  return (
-    <CanvasContainer ref={containerRef}>
-      <Canvas ref={canvasRef} />
-    </CanvasContainer>
-  );
-});
+        // @ts-ignore
+        ref.current = { tiles, pieces, initialPos };
+        setLoaded(true);
+
+        function animate() {
+          requestAnimationFrame(animate);
+          renderer.render(scene, camera);
+        }
+        animate();
+      });
+    }, [canvasRef]);
+
+    return (
+      <CanvasContainer ref={containerRef}>
+        <Canvas ref={canvasRef} />
+      </CanvasContainer>
+    );
+  },
+);
 
 const CanvasContainer = styled.div`
   position: relative;

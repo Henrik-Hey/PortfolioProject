@@ -11,12 +11,9 @@ const PersistentBackdrop = () => {
   const canvasRef = useRef<HTMLCanvasElement>(
     null,
   ) as React.MutableRefObject<HTMLCanvasElement>;
-  const followModel = useRef<THREE.Mesh>(
-    null,
-  ) as React.MutableRefObject<THREE.Mesh>;
-  const waveModel = useRef<THREE.Mesh>(
-    null,
-  ) as React.MutableRefObject<THREE.Mesh>;
+  const waveModel = useRef<THREE.Mesh[]>([]) as React.MutableRefObject<
+    THREE.Mesh[]
+  >;
   const size = useWindowSize();
 
   useEffect(() => {
@@ -25,8 +22,8 @@ const PersistentBackdrop = () => {
   }, []);
 
   useEffect(() => {
-    InitializeThreeJS(canvasRef, followModel, waveModel);
-    BuildAnimation(followModel, waveModel);
+    InitializeThreeJS(canvasRef, waveModel);
+    BuildAnimation(waveModel);
   }, [canvasRef, size]);
 
   return (
@@ -48,7 +45,7 @@ const generateWaveMesh = (
   const horizontalSegments = verticalSegments * aspectRatio;
   const geometry = new THREE.PlaneGeometry(
     width,
-    height * 1.75,
+    height,
     horizontalSegments,
     verticalSegments,
   );
@@ -63,11 +60,9 @@ const generateWaveMesh = (
             void main() {
                 vec3 morphedPos = position;
 
-                morphedPos.y += sin(position.x + delta) * ((position.x + 5.0) / 7.0) * seed;
-                morphedPos.y += sin(position.x * 0.5) * seed;
-                morphedPos.y -= sin(delta) * .5;
+                morphedPos.y -= sin(position.x + delta) * ((position.x + 5.0) / 7.0) * seed;
 
-                if(morphedPos.y > 1.00) {
+                if(morphedPos.y < 1.00) {
                     morphedPos.y = position.y;
                 }
 
@@ -104,40 +99,31 @@ const generateWaveMesh = (
   const mesh = new THREE.Mesh(geometry, material);
 
   mesh.position.z = depth;
-  mesh.position.y = 0 + height / 2;
+  mesh.position.y = 0 - height / 2;
+  mesh.userData.height = height;
   return mesh;
 };
 
 const InitializeThreeJS = (
   canvasRef: React.MutableRefObject<HTMLCanvasElement>,
-  followModel: React.MutableRefObject<THREE.Mesh>,
-  waveModel: React.MutableRefObject<THREE.Mesh>,
+  waveModel: React.MutableRefObject<THREE.Mesh[]>,
 ) => {
   if (!canvasRef.current) return;
 
+  const {
+    width,
+    height, // @ts-ignore
+  } = canvasRef.current.parentNode.getBoundingClientRect();
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000,
-  );
+  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
 
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     canvas: canvasRef.current,
     alpha: true,
   });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(width, height);
   renderer.setClearColor(0xffffff, 0);
-
-  const geometry = new THREE.BoxGeometry();
-  const material = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
-  const cube = (followModel.current = new THREE.Mesh(geometry, material));
-
-  cube.rotateY(0.5);
-
-  scene.add(cube);
 
   const color = 0xaaaaaa;
   const intensity = 1;
@@ -152,162 +138,155 @@ const InitializeThreeJS = (
 
   camera.position.z = 5;
 
+  const waveModels = [];
   const wave1Depth = -1.5;
   const wave1Height = visibleHeightAtZDepth(wave1Depth, camera);
   const wave1Width = visibleWidthAtZDepth(wave1Depth, camera);
-  const wave1 = (waveModel.current = generateWaveMesh(
+  const wave1 = generateWaveMesh(
     wave1Depth,
     wave1Width,
-    wave1Height / 2,
-    0xffffff,
+    wave1Height,
+    0xf2f2f2,
     0.99,
-  ));
+  );
+  waveModels.push(wave1);
   scene.add(wave1);
+
+  const wave2 = generateWaveMesh(
+    wave1Depth,
+    wave1Width,
+    wave1Height,
+    0xc3d9de,
+    0.99,
+  );
+  waveModels.push(wave2);
+  scene.add(wave2);
+
+  const wave3 = generateWaveMesh(
+    wave1Depth,
+    wave1Width,
+    wave1Height,
+    0x040e32,
+    0.99,
+  );
+  waveModels.push(wave3);
+  scene.add(wave3);
+
+  waveModel.current = waveModels;
 
   const animate = () => {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 
     wave1.material.uniforms.delta.value += 0.01;
-    cube.rotation.y += 0.01;
+    wave2.material.uniforms.delta.value += 0.01;
+    wave3.material.uniforms.delta.value += 0.01;
   };
   animate();
 };
 
-const BuildAnimation = (
-  followModel: React.MutableRefObject<THREE.Mesh>,
-  waveModel: React.MutableRefObject<THREE.Mesh>,
-) => {
+const buildWaveAnimation = (model: THREE.Mesh, start: string) => {
   const timeline = gsap.timeline();
 
-  gsap.set(followModel.current.position, {
-    x: 0,
-    y: 0,
-    z: 0,
+  timeline.fromTo(
+    // @ts-ignore
+    model.material.uniforms.seed,
+    { value: 0 },
+    { value: 1, duration: 0.5, ease: 'power3.out' },
+    0,
+  );
+
+  timeline.fromTo(
+    model.position,
+    { y: -model.userData.height },
+    { y: 0, duration: 1 },
+    0,
+  );
+
+  timeline.fromTo(
+    // @ts-ignore
+    model.material.uniforms.seed,
+    { value: 1 },
+    { value: 0, duration: 0.5, ease: 'power3.out' },
+    0.5,
+  );
+
+  ScrollTrigger.create({
+    trigger: start,
+    // endTrigger: end,
+    start: 'top top',
+    animation: timeline,
+    toggleActions: 'play none none reverse',
   });
 
-  timeline.fromTo(
-    followModel.current.position,
-    {
-      x: 0,
-      y: 0,
-      z: 0,
-    },
-    {
-      scrollTrigger: {
-        scrub: true,
-        trigger: `.${IDs.Canvas.Room}`,
-        endTrigger: `.${IDs.AboutMe}`,
-        start: 'top top',
-        end: 'bottom bottom',
-        pin: true,
-      },
-      x: -4,
-      y: 0,
-      z: 0,
-      onUpdate: function () {},
-      onComplete: function () {
-        console.log('complete 1');
-      },
-    },
-  );
+  return timeline;
+};
 
-  timeline.fromTo(
+const BuildAnimation = (waveModel: React.MutableRefObject<THREE.Mesh[]>) => {
+  buildWaveAnimation(
     // @ts-ignore
-    waveModel.current.material.uniforms.seed,
-    {
-      value: 0.99,
-    },
-    {
-      scrollTrigger: {
-        scrub: true,
-        trigger: `.${IDs.Canvas.Room}`,
-        endTrigger: `.${IDs.AboutMe}`,
-        start: 'top top',
-        end: 'bottom bottom',
-        pin: true,
-      },
-      value: 0,
-      onUpdate: function () {},
-      onComplete: function () {
-        console.log('complete 1');
-      },
-    },
+    waveModel.current[0],
+    `.${IDs.AboutMe}`,
   );
 
-  const initialPosition = waveModel.current.position.y;
-  timeline.fromTo(
+  buildWaveAnimation(
     // @ts-ignore
-    waveModel.current.position,
-    {
-      y: initialPosition,
-    },
-    {
-      scrollTrigger: {
-        scrub: true,
-        trigger: `.${IDs.Canvas.Room}`,
-        endTrigger: `.${IDs.AboutMe}`,
-        start: 'top top',
-        end: 'bottom bottom',
-        pin: true,
-      },
-      y: initialPosition * 4,
-      onUpdate: function () {},
-      onComplete: function () {
-        console.log('complete 1');
-      },
-    },
+    waveModel.current[1],
+    `.${IDs.Projects.Chess}`,
   );
 
-  timeline.fromTo(
-    followModel.current.position,
-    {
-      x: -4,
-      y: 0,
-      z: 0,
-    },
-    {
-      scrollTrigger: {
-        scrub: true,
-        trigger: `.${IDs.AboutMe}`,
-        endTrigger: `.${IDs.Projects.Intro}`,
-        start: 'top top',
-        end: 'bottom bottom',
-      },
-      x: 4,
-      y: 0,
-      z: 0,
-      onUpdate: function () {},
-      onComplete: function () {
-        console.log('complete 2');
-      },
-    },
+  buildWaveAnimation(
+    // @ts-ignore
+    waveModel.current[2],
+    `.${IDs.Projects.LibiGL}`,
   );
 
-  timeline.fromTo(
-    followModel.current.position,
-    {
-      x: 4,
-      y: 0,
-      z: 0,
-    },
-    {
-      scrollTrigger: {
-        scrub: true,
-        trigger: `.${IDs.Projects.Intro}`,
-        endTrigger: `.${IDs.Projects.LibiGL}`,
-        start: 'top top',
-        end: 'bottom bottom',
-      },
-      x: 0,
-      z: 0,
-      y: 2,
-      onUpdate: function () {},
-      onComplete: function () {
-        console.log('complete 3');
-      },
-    },
-  );
+  // timeline.fromTo(
+  //   // @ts-ignore
+  //   waveModel.current.material.uniforms.seed,
+  //   {
+  //     value: 0.99,
+  //   },
+  //   {
+  //     scrollTrigger: {
+  //       scrub: true,
+  //       trigger: `.${IDs.Canvas.Room}`,
+  //       endTrigger: `.${IDs.AboutMe}`,
+  //       start: 'top top',
+  //       end: 'bottom bottom',
+  //       pin: true,
+  //     },
+  //     value: 0,
+  //     onUpdate: function () {},
+  //     onComplete: function () {
+  //       console.log('complete 1');
+  //     },
+  //   },
+  // );
+
+  // const initialPosition = waveModel.current.position.y;
+  // timeline.fromTo(
+  //   // @ts-ignore
+  //   waveModel.current.position,
+  //   {
+  //     y: initialPosition,
+  //   },
+  //   {
+  //     scrollTrigger: {
+  //       scrub: true,
+  //       trigger: `.${IDs.Canvas.Room}`,
+  //       endTrigger: `.${IDs.AboutMe}`,
+  //       start: 'top top',
+  //       end: 'bottom bottom',
+  //       pin: true,
+  //     },
+  //     y: 0,
+  //     onUpdate: function () {},
+  //     onComplete: function () {
+  //       console.log('complete 1');
+  //     },
+  //   },
+  // );
 };
 
 const visibleHeightAtZDepth = (

@@ -19,8 +19,8 @@ const Projects = () => {
           <Paragraph>Theres a lot here... so let's get started!</Paragraph>
         </Section>
       </FullHeightContent>
-      <LibiGL />
       <Chess3D />
+      <LibiGL />
     </>
   );
 };

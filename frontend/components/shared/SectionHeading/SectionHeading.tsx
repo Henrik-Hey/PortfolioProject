@@ -23,7 +23,6 @@ const Heading = styled.h3`
   font-size: 2.5em;
   margin-block-start: 0.25em;
   margin-block-end: 0.25em;
-  font-family: 'Roboto Mono', monospace;
 `;
 
 const SubHeading = styled.h4`
@@ -31,7 +30,6 @@ const SubHeading = styled.h4`
   font-weight: 400;
   margin-block-start: 0.25em;
   margin-block-end: 0.25em;
-  font-family: 'Roboto Mono', monospace;
 `;
 
 export default SectionHeading;

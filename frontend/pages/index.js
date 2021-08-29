@@ -23,7 +23,7 @@ export default function Home() {
           crossOrigin={'true'}
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Nunito&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap"
           rel="stylesheet"
         ></link>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -49,7 +49,8 @@ export default function Home() {
 
 const GlobalStyles = createGlobalStyle`
   * {
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Courier Prime', monospace;
+    -webkit-font-smoothing: antialiased;
   }
 
   body {

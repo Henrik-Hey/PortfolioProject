@@ -33,6 +33,23 @@ const PersistentBackdrop = () => {
   );
 };
 
+const generateNetSphere = () => {
+  const geometry = new THREE.IcosahedronGeometry(5, 12);
+  const perlinNoise = new THREE.TextureLoader().load(
+    'textures/perlin-noise-texture.png',
+  );
+  perlinNoise.wrapS = THREE.RepeatWrapping;
+  perlinNoise.wrapT = THREE.RepeatWrapping;
+  perlinNoise.repeat.set(4, 4);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xf2f2f2,
+    wireframe: true,
+    displacementMap: perlinNoise,
+  });
+  const sphere = new THREE.Mesh(geometry, material);
+  return sphere;
+};
+
 const generateWaveMesh = (
   depth: number,
   width: number,
@@ -125,15 +142,7 @@ const InitializeThreeJS = (
   renderer.setSize(width, height);
   renderer.setClearColor(0xffffff, 0);
 
-  const color = 0xaaaaaa;
-  const intensity = 1;
-  const light = new THREE.DirectionalLight(color, intensity);
-  light.position.set(0, 10, 5);
-  light.target.position.set(-5, 0, 0);
-  scene.add(light);
-  scene.add(light.target);
-
-  const light2 = new THREE.HemisphereLight(0xf0f0f0, 0xf0f0f0, 0.5);
+  const light2 = new THREE.AmbientLight(0xffffff);
   scene.add(light2);
 
   camera.position.z = 5;
@@ -174,13 +183,28 @@ const InitializeThreeJS = (
 
   waveModel.current = waveModels;
 
+  const netSphere = generateNetSphere();
+  netSphere.position.x = -15;
+  netSphere.position.y = -8;
+  netSphere.position.z = -20;
+  netSphere.material.emissiveIntensity = 0;
+  netSphere.scale.set(2, 2, 2);
+  scene.add(netSphere);
+
   const animate = () => {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 
-    wave1.material.uniforms.delta.value += 0.01;
-    wave2.material.uniforms.delta.value += 0.01;
-    wave3.material.uniforms.delta.value += 0.01;
+    wave1.material.uniforms.delta.value += 0.05;
+    wave2.material.uniforms.delta.value += 0.05;
+    wave3.material.uniforms.delta.value += 0.05;
+
+    netSphere.rotation.y += 0.001;
+    netSphere.rotation.z += 0.001;
+    netSphere.material.displacementScale =
+      1.5 + Math.sin(netSphere.rotation.y * 10);
+    netSphere.material.displacementBias =
+      1.5 + Math.sin(netSphere.rotation.y * 10);
   };
   animate();
 };
@@ -240,53 +264,6 @@ const BuildAnimation = (waveModel: React.MutableRefObject<THREE.Mesh[]>) => {
     waveModel.current[2],
     `.${IDs.Projects.LibiGL}`,
   );
-
-  // timeline.fromTo(
-  //   // @ts-ignore
-  //   waveModel.current.material.uniforms.seed,
-  //   {
-  //     value: 0.99,
-  //   },
-  //   {
-  //     scrollTrigger: {
-  //       scrub: true,
-  //       trigger: `.${IDs.Canvas.Room}`,
-  //       endTrigger: `.${IDs.AboutMe}`,
-  //       start: 'top top',
-  //       end: 'bottom bottom',
-  //       pin: true,
-  //     },
-  //     value: 0,
-  //     onUpdate: function () {},
-  //     onComplete: function () {
-  //       console.log('complete 1');
-  //     },
-  //   },
-  // );
-
-  // const initialPosition = waveModel.current.position.y;
-  // timeline.fromTo(
-  //   // @ts-ignore
-  //   waveModel.current.position,
-  //   {
-  //     y: initialPosition,
-  //   },
-  //   {
-  //     scrollTrigger: {
-  //       scrub: true,
-  //       trigger: `.${IDs.Canvas.Room}`,
-  //       endTrigger: `.${IDs.AboutMe}`,
-  //       start: 'top top',
-  //       end: 'bottom bottom',
-  //       pin: true,
-  //     },
-  //     y: 0,
-  //     onUpdate: function () {},
-  //     onComplete: function () {
-  //       console.log('complete 1');
-  //     },
-  //   },
-  // );
 };
 
 const visibleHeightAtZDepth = (

@@ -1,33 +1,48 @@
+import React from 'react';
 import styled from 'styled-components';
 
 interface props {
-  title: string;
+  title: string | React.ReactNode | React.ReactChildren;
   subHeading?: string;
+  borderColor?: string;
 }
 
-const SectionHeading = ({ title, subHeading }: props) => (
-  <div>
+const SectionHeading = ({ title, subHeading, borderColor }: props) => (
+  <Container $borderColor={borderColor}>
     <Heading>{title}</Heading>
-    <Divider />
     {subHeading && <SubHeading>{subHeading}</SubHeading>}
-  </div>
+  </Container>
 );
 
-const Divider = styled.div`
+interface ContainerProps {
+  $borderColor?: string;
+}
+
+const Container = styled.div<ContainerProps>`
   width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #6f76fd, #46c7d8, #c737cc);
+  border-left: 5px solid ${({ $borderColor }) => $borderColor || 'black'};
+  padding-left: 2vw;
 `;
 
 const Heading = styled.h3`
-  font-size: 2.5em;
   margin-block-start: 0.25em;
   margin-block-end: 0.25em;
+  margin-left: 1rem;
+  font-size: 5rem;
+  font-weight: 100;
+  letter-spacing: 1vw;
+  margin-left: 2vw;
+  z-index: 1;
+  margin: 0px;
 `;
 
 const SubHeading = styled.h4`
-  font-size: 1em;
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 100;
+  margin-left: 2vw;
+  z-index: 1;
+  margin: 0px;
+  letter-spacing: 6px;
   margin-block-start: 0.25em;
   margin-block-end: 0.25em;
 `;

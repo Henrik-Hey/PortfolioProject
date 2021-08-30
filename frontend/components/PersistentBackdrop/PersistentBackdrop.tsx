@@ -56,6 +56,7 @@ const generateWaveMesh = (
   height: number,
   color: number,
   seed: number,
+  sideCircleColor?: number,
 ) => {
   const aspectRatio = width / height;
   const verticalSegments = 32;
@@ -95,16 +96,42 @@ const generateWaveMesh = (
   const fragmentShader = () => {
     return `
             uniform vec3 color; 
+            uniform vec3 circleColor;
+            uniform vec2 resolution;
             varying vec3 vUv;
+
+            float draw_circle(vec2 coord, float radius) {
+              return step(length(coord), radius);
+            }
     
             void main() {
-                gl_FragColor = vec4(color, 1.0);
+              vec2 coord = gl_FragCoord.xy;
+              vec2 offset = resolution / 2.0;
+              
+              offset.x = resolution.x * 0.95;
+
+              float circle = draw_circle(coord - offset, resolution.x / 3.0);
+              vec3 color_out = color;
+
+              if(circle == 1.0) {
+                color_out = circleColor;
+              }
+          
+              gl_FragColor = vec4(color_out, 1.0);
             }
         `;
   };
 
   let uniforms = {
     color: { type: 'vec3', value: new THREE.Color(color) },
+    resolution: {
+      type: 'vec3',
+      value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+    },
+    circleColor: {
+      type: 'vec3',
+      value: new THREE.Color(sideCircleColor || color),
+    },
     delta: { type: 'float', value: Math.sin(Date.now()) },
     seed: { type: 'float', value: seed },
   };
@@ -177,9 +204,20 @@ const InitializeThreeJS = (
     wave1Height,
     0x040e32,
     0.99,
+    0x031659,
   );
   waveModels.push(wave3);
   scene.add(wave3);
+
+  const wave4 = generateWaveMesh(
+    wave1Depth,
+    wave1Width,
+    wave1Height,
+    0x09596c,
+    0.99,
+  );
+  waveModels.push(wave4);
+  scene.add(wave4);
 
   waveModel.current = waveModels;
 
@@ -198,6 +236,7 @@ const InitializeThreeJS = (
     wave1.material.uniforms.delta.value += 0.05;
     wave2.material.uniforms.delta.value += 0.05;
     wave3.material.uniforms.delta.value += 0.05;
+    wave4.material.uniforms.delta.value += 0.05;
 
     netSphere.rotation.y += 0.001;
     netSphere.rotation.z += 0.001;
@@ -263,6 +302,12 @@ const BuildAnimation = (waveModel: React.MutableRefObject<THREE.Mesh[]>) => {
     // @ts-ignore
     waveModel.current[2],
     `.${IDs.Projects.LibiGL}`,
+  );
+
+  buildWaveAnimation(
+    // @ts-ignore
+    waveModel.current[3],
+    `.${IDs.Projects.Simulant}`,
   );
 };
 

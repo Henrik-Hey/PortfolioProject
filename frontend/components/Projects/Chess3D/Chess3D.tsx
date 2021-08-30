@@ -62,12 +62,11 @@ const Chess3D = () => {
   return (
     <Container ref={containerRef}>
       <ContentContainer>
+        <ChessBoard ref={chessTilesRef} setLoaded={setLoaded} />
+
         <Intro ref={introRef} className={IDs.Projects.Chess}>
           <StyledSection>
             <SectionContent>
-              <SectionSegment>
-                <ChessBoard ref={chessTilesRef} setLoaded={setLoaded} />
-              </SectionSegment>
               <SectionSegment ref={segment1Ref}>
                 <SectionHeading
                   title="3D Chess with THREE.js"
@@ -269,18 +268,19 @@ const BuildAnimation = (
     start: 'top top',
     end: 'bottom bottom',
     animation: timeline,
-    onEnter: () => {
-      boardTimeline.play();
-    },
-    onLeaveBack: () => {
-      boardTimeline.reverse();
-    },
+  });
+
+  ScrollTrigger.create({
+    trigger: `.${IDs.Projects.Chess}`,
+    start: 'top top',
+    animation: boardTimeline,
+    toggleActions: 'play none none reverse',
   });
 };
 
 const Container = styled.div`
   width: 100%;
-  height: 400vh;
+  height: 300vh;
 `;
 
 const ContentContainer = styled(FullHeightContent)`
@@ -309,6 +309,7 @@ const SectionSegment = styled.div`
   top: 0px;
   left: 0px;
   width: 100%;
+  max-width: calc(960px * 0.5);
   height: 100%;
   display: flex;
   overflow: visible;

@@ -69,8 +69,8 @@ const ChessBoard = forwardRef<BoardRef, ChessBoardProps>(
       renderer.setClearColor(0xffffff00, 0);
 
       camera.position.z = 11.5;
-      camera.position.y = 6;
-      camera.position.x = -1.5;
+      camera.position.y = 4;
+      camera.position.x = -4;
       camera.rotateY(THREE.MathUtils.degToRad(-20));
       camera.rotateX(THREE.MathUtils.degToRad(-20));
 
@@ -205,7 +205,7 @@ const ChessBoard = forwardRef<BoardRef, ChessBoardProps>(
 );
 
 const CanvasContainer = styled.div`
-  position: relative;
+  position: absolute;
   width: 100vw;
   height: 100vh;
 `;

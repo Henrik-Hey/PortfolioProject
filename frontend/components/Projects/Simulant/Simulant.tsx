@@ -11,10 +11,10 @@ import {
 import IDs from '../../../variables/IDs';
 import MeshRenderer from '../MeshRenderer';
 
-const MP_UP_ID = IDs.Projects.LibiGL + 'motion_path_up';
-const MP_DOWN_ID = IDs.Projects.LibiGL + 'motion_path_down';
+const MP_UP_ID = IDs.Projects.Simulant + 'motion_path_up';
+const MP_DOWN_ID = IDs.Projects.Simulant + 'motion_path_down';
 
-const LibiGL = () => {
+const Simulant = () => {
   const timelineRef = useRef<GSAPTimeline>(
     null,
   ) as MutableRefObject<GSAPTimeline>;
@@ -64,12 +64,12 @@ const LibiGL = () => {
   return (
     <Container ref={containerRef}>
       <ContentContainer>
-        <Intro ref={introRef} className={IDs.Projects.LibiGL}>
+        <Intro ref={introRef} className={IDs.Projects.Simulant}>
           <StyledSection>
             <SectionContent>
               <SectionSegment ref={segment1Ref}>
                 <SectionHeading
-                  title="Multi-Resolution Analysis"
+                  title="Simulant.js"
                   subHeading={
                     '[Examples of algorithm output shown on the side]'
                   }
@@ -101,7 +101,7 @@ const LibiGL = () => {
                 <path
                   id={MP_DOWN_ID}
                   fill="none"
-                  stroke="none"
+                  stroke="green"
                   strokeWidth="2"
                   d="M60,80 a60,60 0 0,1 -60,-60"
                 />
@@ -109,7 +109,7 @@ const LibiGL = () => {
                 <path
                   id={MP_UP_ID}
                   fill="none"
-                  stroke="none"
+                  stroke="red"
                   strokeWidth="2"
                   d="M0,20 a60,60 0 0,1 60,-60"
                 />
@@ -253,15 +253,15 @@ const BuildAnimation = (
 
 const Container = styled.div`
   width: 100%;
-  height: 300vh;
+  height: 400vh;
 `;
 
 const ContentContainer = styled(FullHeightContent)`
   position: -webkit-sticky;
   position: sticky;
   top: 0;
-  color: white;
   overflow: hidden;
+  color: white;
 `;
 
 const Intro = styled(FullHeightContent)`
@@ -295,15 +295,14 @@ const SectionParagraph = styled(Paragraph)``;
 const CanvasCardContainer = styled(FullHeightContent)`
   position: relative;
   flex: 1;
-  overflow: visible;
 `;
 
 const SVGPathContainer = styled.svg`
   position: absolute;
   left: 0px;
-  width: calc(100vw - 960px);
+  width: calc((100vw - 960px) / 2 + 180px);
   height: 100vh;
-  opacity: 1;
+  opacity: 0;
   min-width: 280px;
 
   @media (max-width: 960px) {
@@ -317,6 +316,9 @@ const CanvasCard = styled.div`
   height: calc(60vh);
   min-width: 280px;
   flex: 1;
+  background-image: linear-gradient(#101010, #383838);
+  border-radius: 75px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   overflow: hidden;
 `;
 
@@ -350,4 +352,4 @@ const CCTitleSubHeading = styled.h4`
   margin: 0px;
 `;
 
-export default LibiGL;
+export default Simulant;

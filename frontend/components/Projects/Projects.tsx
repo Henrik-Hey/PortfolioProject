@@ -9,6 +9,7 @@ import {
 import IDs from '../../variables/IDs';
 import LibiGL from './LibiGL/LibiGL';
 import Chess3D from './Chess3D/Chess3D';
+import Simulant from './Simulant/Simulant';
 import styled from 'styled-components';
 
 const Projects = () => {
@@ -35,6 +36,7 @@ const Projects = () => {
       </FullHeightContent>
       <Chess3D />
       <LibiGL />
+      <Simulant />
     </>
   );
 };

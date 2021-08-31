@@ -60,7 +60,7 @@ const Chess3D = () => {
   }, [timelineRef, chessTilesRef, loaded]);
 
   return (
-    <Container ref={containerRef}>
+    <Container ref={containerRef} id={IDs.Projects.Chess}>
       <ContentContainer>
         <ChessBoard ref={chessTilesRef} setLoaded={setLoaded} />
 

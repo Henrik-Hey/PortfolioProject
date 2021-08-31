@@ -241,9 +241,9 @@ const InitializeThreeJS = (
     netSphere.rotation.y += 0.001;
     netSphere.rotation.z += 0.001;
     netSphere.material.displacementScale =
-      1.5 + Math.sin(netSphere.rotation.y * 10);
+      2.5 + Math.sin(netSphere.rotation.y * 10);
     netSphere.material.displacementBias =
-      1.5 + Math.sin(netSphere.rotation.y * 10);
+      2 + Math.sin(netSphere.rotation.y * -5);
   };
   animate();
 };
@@ -277,7 +277,7 @@ const buildWaveAnimation = (model: THREE.Mesh, start: string) => {
   ScrollTrigger.create({
     trigger: start,
     // endTrigger: end,
-    start: 'top top',
+    start: 'top-=25% top',
     animation: timeline,
     toggleActions: 'play none none reverse',
   });

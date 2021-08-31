@@ -25,11 +25,15 @@ const Projects = () => {
           </FlexRow>
           <FlexRow>
             <FlexColumn>
-              <SubHeadingLink href="#">3D Chess with Three.js</SubHeadingLink>
-              <SubHeadingLink href="#">
+              <SubHeadingLink href={`#${IDs.Projects.Chess}`}>
+                3D Chess with Three.js
+              </SubHeadingLink>
+              <SubHeadingLink href={`#${IDs.Projects.LibiGL}`}>
                 Multi Resolution Analysis
               </SubHeadingLink>
-              <SubHeadingLink href="#">Simulant.js</SubHeadingLink>
+              <SubHeadingLink href={`#${IDs.Projects.Simulant}`}>
+                Simulant.js
+              </SubHeadingLink>
             </FlexColumn>
           </FlexRow>
         </FlexContainer>

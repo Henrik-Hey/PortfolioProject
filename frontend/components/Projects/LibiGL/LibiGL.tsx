@@ -62,7 +62,7 @@ const LibiGL = () => {
   }, [introRef]);
 
   return (
-    <Container ref={containerRef}>
+    <Container ref={containerRef} id={IDs.Projects.LibiGL}>
       <ContentContainer>
         <Intro ref={introRef} className={IDs.Projects.LibiGL}>
           <StyledSection>

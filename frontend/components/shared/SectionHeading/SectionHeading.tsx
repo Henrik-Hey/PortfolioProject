@@ -3,13 +3,19 @@ import styled from 'styled-components';
 
 interface props {
   title: string | React.ReactNode | React.ReactChildren;
+  titleSize?: string;
   subHeading?: string;
   borderColor?: string;
 }
 
-const SectionHeading = ({ title, subHeading, borderColor }: props) => (
+const SectionHeading = ({
+  title,
+  titleSize,
+  subHeading,
+  borderColor,
+}: props) => (
   <Container $borderColor={borderColor}>
-    <Heading>{title}</Heading>
+    <Heading $titleSize={titleSize}>{title}</Heading>
     {subHeading && <SubHeading>{subHeading}</SubHeading>}
   </Container>
 );
@@ -24,11 +30,15 @@ const Container = styled.div<ContainerProps>`
   padding-left: 2vw;
 `;
 
-const Heading = styled.h3`
+interface HeadingProps {
+  $titleSize?: string;
+}
+
+const Heading = styled.h3<HeadingProps>`
   margin-block-start: 0.25em;
   margin-block-end: 0.25em;
   margin-left: 1rem;
-  font-size: 5rem;
+  font-size: ${({ $titleSize }) => $titleSize || '5rem'};
   font-weight: 100;
   letter-spacing: 1vw;
   margin-left: 2vw;

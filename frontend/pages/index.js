@@ -53,6 +53,10 @@ const GlobalStyles = createGlobalStyle`
     -webkit-font-smoothing: antialiased;
   }
 
+  html {
+    scroll-padding-top: 20vh;
+  }
+
   body {
     margin: 0px;
     overflow-x: hidden;

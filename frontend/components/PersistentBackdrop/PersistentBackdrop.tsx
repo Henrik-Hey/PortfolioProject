@@ -78,10 +78,8 @@ const generateWaveMesh = (
             void main() {
                 vec3 morphedPos = position;
 
-                morphedPos.y -= sin(position.x + delta) * ((position.x + 5.0) / 7.0) * seed;
-
-                if(morphedPos.y < 1.00) {
-                    morphedPos.y = position.y;
+                if(morphedPos.y >= 1.0) {
+                  morphedPos.y -= sin(position.x + delta) * ((position.x + 5.0) / 7.0) * seed;
                 }
 
                 vUv = morphedPos; 

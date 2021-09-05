@@ -288,7 +288,7 @@ const EditorBody = styled.div`
 
 const EditorNumColumn = styled.div`
   width: 48px;
-  font-size: min(1.7vh, 16px);
+  font-size: min(1.7vh, 14px);
   text-align: right;
   padding-right: 16px;
   color: rgba(255, 255, 255, 0.3);
@@ -305,11 +305,12 @@ const blink = keyframes`
 `;
 
 const EditorContent = styled.pre`
-  font-size: min(1.7vh, 16px);
+  font-size: min(1.7vh, 14px);
   margin: 0px;
 
   &::after {
     content: '';
+    font-size: min(1.9vh, 15px);
     color: #e4be3b;
     animation: ${blink} 1s infinite;
   }
